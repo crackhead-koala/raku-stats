@@ -2,22 +2,26 @@ use v6;
 
 # Error function polynomial approximation
 # (maximum error of 1.2e-7, which is pretty big... can do 6e-19 with [Cody, 1969])
+# sub erf($x) {
+#     return 0 if $x == 0;
+#     my $t = 1 / (1 + 0.5 * abs($x));
+#     my $theta = $t * exp( -$x ** 2 - 1.26551223             + 1.00002368 * $t
+#                                    + 0.37409196 * ($t ** 2) + 0.09678418 * ($t ** 3)
+#                                    - 0.18628806 * ($t ** 4) + 0.27886807 * ($t ** 5)
+#                                    - 1.13520398 * ($t ** 6) + 1.48851587 * ($t ** 7)
+#                                    - 0.82215223 * ($t ** 8) + 0.17087277 * ($t ** 9) );
+#     return $x > 0 ?? 1 - $theta !! $theta - 1;
+# }
+
+# [https://www.hindawi.com/journals/mpe/2012/124029/]
 sub erf($x) {
-    return 0 if $x == 0;
-    my $t = 1 / (1 + 0.5 * abs($x));
-    my $theta = $t * exp( -$x ** 2 - 1.26551223             + 1.00002368 * $t
-                                   + 0.37409196 * ($t ** 2) + 0.09678418 * ($t ** 3)
-                                   - 0.18628806 * ($t ** 4) + 0.27886807 * ($t ** 5)
-                                   - 1.13520398 * ($t ** 6) + 1.48851587 * ($t ** 7)
-                                   - 0.82215223 * ($t ** 8) + 0.17087277 * ($t ** 9) );
-    return $x > 0 ?? 1 - $theta !! $theta - 1;
+    return ;
 }
 
 sub factorial($n) { return [*] 1..$n; }
 
 # [Chen, 2016]
 sub gamma($x) {
-    say $x.WHAT;
     return factorial($x - 1) if $x.isa(Int) && 0 < $x && $x < 100;
     my $a = sqrt(2 * pi * $x);
     my $b = exp($x, $x / e);
@@ -25,18 +29,22 @@ sub gamma($x) {
     return $a * $b * $c / $x;
 }
 
-sub pochhammer($x, $m) { return gamma($x + $m) / gamma($x); }
-
-sub hyper2f1() {}
-
 # Normal distribution
 sub d-norm($x, $mean = 0, $sd = 1) {
-    return 1 / ($sd * sqrt(2 * pi)) * exp(-0.5 * (($x - $mean) / $sd) ** 2);
+    $x = ($x - $mean) / $sd;
+    return 1 / ($sd * sqrt(2 * pi)) * exp(-0.5 * $x ** 2);
 }
 
 # [Bowling et al., 2009]
+# sub p-norm($x, $mean = 0, $sd = 1) {
+#     $x = ($x - $mean) / $sd;
+#     return 1 / (1 + exp(-0.07056 * $x ** 3 - 1.5976 * $x));
+# }
+
+# [https://www.hindawi.com/journals/mpe/2012/124029/]
 sub p-norm($x, $mean = 0, $sd = 1) {
-    return 1 / (1 + exp(-0.07056 * (($x - $mean) / $sd) ** 3 - 1.5976 * ($x - $mean) / $sd));
+    $x = ($x - $mean) / $sd;
+    return 0.5 * tanh(39/2 * $x / sqrt(2 * pi) - 111/2 * atan(35/111 * $x / sqrt(2 * pi))) + 0.5;
 }
 
 # [Voutier, 2010]
@@ -75,12 +83,34 @@ sub r-norm($n, $mean = 0, $sd = 1) {
 # Student's t distribution
 sub d-t($x, $df) {
     return p-norm($x) if $df > 30;
+    if $df == 1 {
+        return 1 / (pi * (1 + $x ** 2));
+    } elsif $df == 2 {
+        return (2 * sqrt(2) * (1 + 0.5 * $x ** 2)) ** (-3/2);
+    } elsif $df == 3 {
+        return 2 / (pi * sqrt(3) * (1 + ($x ** 2) / 3) ** 2);
+    } elsif $df == 4 {
+        return 3/8 * (1 + 0.25 * $x ** 2) ** (-5/2);
+    } elsif $df == 5 {
+        return 8 / (3 * pi * sqrt(5)) * (1 + 0.2 * $x ** 2) ** (-3);
+    }
     return gamma(0.5 * ($df + 1)) / (sqrt($df * pi) * gamma($df / 2)) * (1 + $x ** 2 / $df) ** (-0.5 * ($df + 1));
 }
 
 sub p-t($x, $df) {
     return p-norm($x) if $df > 100;
-
+    if $df == 1 {
+        return 0.5 + 1/pi * atan($x);
+    } elsif $df == 2 {
+        return 0.5 + $x / (2 * sqrt(2) * sqrt(1 + 0.5 * $x ** 2));
+    } elsif $df == 3 {
+        return 0.5 + 1/pi * (1/sqrt(3) * $x / (1 + ($x ** 2) / 3) + atan($x/sqrt(3)));
+    } elsif $df == 4 {
+        return 0.5 + 3/8 * $x / sqrt(1 + 0.25 * $x ** 2) * (1 - 1/12 * ($x ** 2) / (1 + 0.25 * $x ** 2));
+    } elsif $df == 5 {
+        return 0.5 + 1/pi * (($x / (1 + 0.2 * $x ** 2) / sqrt(5)) * (1 + 2/3 / (1 + 0.2 * $x ** 2)) + atan($x/sqrt(5)));
+    }
+    die "df = " ~ $df ~ " not supported yet...";
 }
 
 sub q-t($p, $df) {}
