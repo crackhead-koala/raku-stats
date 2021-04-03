@@ -1,0 +1,5 @@
+# Raku pre-compilated files
+.precomp/
+
+# Files used to test scripts
+test.raku
