@@ -1,8 +1,8 @@
 use v6;
+use TestUtils;
+use Normal;
 
 unit module HypothesisTesting::ztest;
-
-use DistributionFunctions::normal;
 
 
 multi sub z-test(
@@ -25,19 +25,16 @@ multi sub z-test(
         when "less"      { $p-value = norm-cdf -$z; }
         when "greater"   { $p-value = norm-cdf $z; }
         default {
-            die "Argument \$alt must be one of: 'two-sided', 'less', 'greater',
-not $alt";
+            die "Argument \$alt must be one of: 'two-sided', 'less', 'greater', not $alt";
         }
     }
 
     if $do-print {
-        say sprintf(
-            "One sample z-test\n
-null hypothesis: p = %.4f
- alt hypothesis: $alt\n
-      z = %9.6f
-p-value = %9.6f",
-            $mu,
+        say format-test-results(
+            "One sample z-test",
+            sprintf("p = %.2f", $p),
+            $alt,
+            "z",
             $z,
             $p-value
         );
@@ -66,20 +63,16 @@ multi sub z-test(
         when "less"      { $p-value = norm-cdf -$z; }
         when "greater"   { $p-value = norm-cdf $z; }
         default {
-            die "Argument \$alt must be one of: 'two-sided', 'less', 'greater',
-not '$alt'";
+            die "Argument \$alt must be one of: 'two-sided', 'less', 'greater', not '$alt'";
         }
     }
 
     if $do-print {
-        say sprintf(
-            "Two sample z-test\n
-null hypothesis: %.4f = %.4f
- alt hypothesis: $alt\n
-      z = %9.6f
-p-value = %9.6f",
-            $p-x,
-            $p-y,
+        say format-test-results(
+            "Two sample z-test",
+            "p_x - p_y = 0",
+            $alt,
+            "z",
             $z,
             $p-value
         );

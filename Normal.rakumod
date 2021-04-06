@@ -1,24 +1,10 @@
 use v6;
+use SpecialFunctions;
 
 unit module DistributionFunctions::Normal;
 
 
-my sub factorial(Int:D $n --> Int:D) {
-    return 1 if $n == 0;
-    return [*] 1..$n;
-}
-
-my sub double-factorial(Int:D $n --> Int:D) {
-    return 1 if $n == 0;
-    if $n %% 2 {
-        return [*] 2, 4 ... $n;
-    } else {
-        return [*] 1, 3 ... (ceiling($n) - 1);
-    }
-}
-
-
-sub norm-pdf(Numeric:D $x, $mean=0, $sd=1 --> Numeric:D) is export {
+sub norm-pdf(Numeric:D $x!, $mean=0, $sd=1 --> Numeric:D) is export {
     my Numeric $z = ($x - $mean) / $sd;
     return exp(-0.5 * $z**2) / ($sd * sqrt(2 * pi));
 }
@@ -26,20 +12,19 @@ sub norm-pdf(Numeric:D $x, $mean=0, $sd=1 --> Numeric:D) is export {
 
 # [https://www.hindawi.com/journals/mpe/2012/124029/]
 sub norm-cdf(
-    Numeric:D $x,
+    Numeric:D $x!,
     Numeric:D $mean = 0,
     Numeric:D $sd = 1 --> Numeric:D
 ) is export
 {
-    my Numeric $z = ($x - $mean) / $sd;
-    return 0.5 * tanh(39/2 * $z / sqrt(2 * pi) - 111/2
-               * atan(35/111 * $z / sqrt(2 * pi))) + 0.5;
+    my Numeric $z = ($x - $mean) / $sd / sqrt(2);
+    return 0.5 * (1 + erf($z));
 }
 
 
 # [Voutier, 2010]
 sub norm-quant(
-    Numeric:D $p,
+    Numeric:D $p!,
     Numeric:D $mean = 0,
     Numeric:D $sd = 1 --> Numeric:D
 ) is export
@@ -50,6 +35,8 @@ sub norm-quant(
         return $mean + $sd * central($p);
     } elsif 0.9535 < $p <= 1 {
         return $mean - $sd * tail(1 - $p);
+    } else {
+        die "\$p must be a value between 0 and 1, not $p";
     }
 
     sub tail(Numeric:D $p --> Numeric:D) {
@@ -76,10 +63,10 @@ sub norm-quant(
 }
 
 sub norm-rand(
-    Int:D $n,
+    Int:D $n!,
     Numeric:D $mean = 0,
-    Numeric:D $sd = 1 --> Numeric:D
+    Numeric:D $sd = 1 --> Positional:D
 ) is export
 {
-    pass;
+    return norm-quant(1.rand, $mean, $sd) for 1..$n;
 }

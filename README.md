@@ -1,13 +1,12 @@
 # A statistics package for Raku
-This is just a small personal project for me to learn what actually goes into creating scientific software.
+This is just a small personal project for me to learn more about statistical computing.
 
 TODO:
 
-- [ ] find a better way to approximate distridution functions
+- [x] find a better way to approximate distribution functions...
 
-Right now the best precision is about 4 digits after the secimal point, which is *okay* for doing calculations by hand but not for a computer
+I switched to using native calls and functions from the GNU Scientific Library.
 
 - [ ] add more distributions...
 
 - [ ] add more statistical tests...
-
